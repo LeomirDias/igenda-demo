@@ -210,7 +210,7 @@ export const updateAppointment = actionClient
             ? `${address} - ${enterprise.complement}, ${enterprise.city}/${enterprise.state} - CEP: ${enterprise.cep}`
             : `${address}, ${enterprise.city}/${enterprise.state} - CEP: ${enterprise.cep}`;
 
-        const updateMessage = `Olá, ${client.name}!👋\n\nEsta é uma mensagem automática da iGenda de ${enterprise.name}\n\n✏️ Seu agendamento foi atualizado na ${enterprise.name}.\n\nNovos dados do agendamento:\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${parsedInput.time}\n• Valor: ${formattedPrice}\n• Endereço: ${fullAddress}\n\n📞 Caso precise ajustar novamente ou tirar dúvidas, entre em contato com ${enterprise.name} pelo número ${enterprise.phoneNumber}.\n\nAgradecemos pela compreensão!`;
+        const updateMessage = `Olá, ${client.name}!👋\n\nEsta é uma mensagem automática da iGenda de ${enterprise.name}\n\n✏️ Seu agendamento foi atualizado na ${enterprise.name}.\n\nNovos dados do agendamento:\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${parsedInput.time}\n• Valor: ${formattedPrice}\n• Endereço: ${fullAddress}\n\n📞 Caso precise ajustar novamente ou tirar dúvidas, entre em contato com ${enterprise.name} pelo número ${enterprise.phoneNumber}.\n\nAgradecemos a compreensão!💚`;
 
         await sendWhatsappMessage(client.phoneNumber, updateMessage);
         revalidatePath("/appointments");

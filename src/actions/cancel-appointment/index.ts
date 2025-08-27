@@ -82,7 +82,7 @@ export const cancelAppointment = actionClient
       ? `\n\nMotivo do cancelamento: ${parsedInput.justification}`
       : "";
 
-    const message = `Olá, ${client.name}!👋\n\nEsta é uma mensagem automática da iGenda de ${enterprise.name}\n\n✖️ Seu agendamento foi cancelado na ${enterprise.name}.\n\nDados do agendamento cancelado:\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${appointment.time}\n• Valor: ${formattedPrice}\n• Endereço: ${fullAddress}${justificationText}\n\n📞 Para reagendar ou esclarecer dúvidas, entre em contato com ${enterprise.name} pelo número ${enterprise.phoneNumber}.\n\nAgradecemos pela compreensão!`;
+    const message = `Olá, ${client.name}!👋\n\nEsta é uma mensagem automática da iGenda de ${enterprise.name}\n\n❌ Seu agendamento foi cancelado na ${enterprise.name}.\n\nDados do agendamento cancelado:\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${appointment.time}\n• Valor: ${formattedPrice}\n• Endereço: ${fullAddress}${justificationText}\n\n📞 Para reagendar ou esclarecer dúvidas, entre em contato com ${enterprise.name} pelo número ${enterprise.phoneNumber}.\n\nAgradecemos a compreensão!💚`;
 
     await sendWhatsappMessage(client.phoneNumber, message);
     revalidatePath("/appointments");

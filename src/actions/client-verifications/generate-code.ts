@@ -58,7 +58,7 @@ export const generateCode = actionClient
         `Olá, ${parsedInput.clientData?.name || ""}!
 Esta é uma mensagem automática da iGenda de ${enterpriseName}. 💚
 
-Seu código de verificação para acesso ao iGenda é: *${verificationCode}*
+Seu código de verificação para acesso a iGenda é: *${verificationCode}*
 
 ⚠️ Atenção: 
 
