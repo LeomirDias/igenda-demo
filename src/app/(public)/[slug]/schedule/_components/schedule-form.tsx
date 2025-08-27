@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { ptBR } from "date-fns/locale";
 import dayjs from "dayjs";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -16,12 +15,11 @@ import { getProfessionalsByServicePublic } from "@/actions/associate-professiona
 import { createAppointment } from "@/actions/create-appointments";
 import { getAvailableTimes } from "@/actions/get-available-times";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+
 
 const scheduleFormSchema = z.object({
     serviceId: z.string({
@@ -222,44 +220,19 @@ const ScheduleForm = ({ services, professionals, enterpriseId, clientId, enterpr
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
                                     <FormLabel>Data</FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full justify-start text-left font-normal",
-                                                        !field.value && "text-muted-foreground",
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {field.value ? (
-                                                        field.value.toLocaleDateString("pt-BR", {
-                                                            day: "2-digit",
-                                                            month: "long",
-                                                            year: "numeric"
-                                                        })
-                                                    ) : (
-                                                        <span>Selecione uma data</span>
-                                                    )}
-                                                </Button>
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                mode="single"
-                                                locale={ptBR}
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) => {
-                                                    const today = new Date();
-                                                    today.setHours(0, 0, 0, 0);
-                                                    return date < today || !isDateAvailable(date);
-                                                }}
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
+                                    <FormControl>
+                                        <DatePicker
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            disabled={(date) => {
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                return date < today || !isDateAvailable(date);
+                                            }}
+                                            placeholder="Selecione uma data"
+                                            minDate={new Date()}
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
