@@ -2,7 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
 import { db } from "@/db";
-import { appointmentsTable, clientsTable } from "@/db/schema";
+import { appointmentsTable } from "@/db/schema";
 
 
 const WEBHOOK_SECRET = (process.env.ZAPI_WEBHOOK_SECRET);
@@ -42,6 +42,10 @@ export async function POST(req: NextRequest) {
         payload?.message?.extendedTextMessage?.text;
     const label = (textMsg ?? "").trim().toUpperCase();
 
+    // Captura um possível código de 4 dígitos
+    const codeMatch = (textMsg ?? "").match(/(\d{4})/);
+    const code = codeMatch?.[1];
+
     let decision: "scheduled" | "canceled" | null = null;
     if (label.includes("CONFIRMAR")) decision = "scheduled";
     else if (label.includes("CANCELAR") || label.includes("REJEITAR")) decision = "canceled";
@@ -50,33 +54,18 @@ export async function POST(req: NextRequest) {
         return Response.json({ ok: true, ignored: true, reason: "no decision found" });
     }
 
-    // Correlaciona apenas pelo CLIENTE via número do remetente
-    let appt = null as Awaited<ReturnType<typeof db.query.appointmentsTable.findFirst>> | null;
-
-    const rawPhone: string | undefined = payload?.phone ?? payload?.from ?? payload?.participantPhone ?? payload?.participant;
-    const digits = typeof rawPhone === "string" ? rawPhone.replace(/\D/g, "") : undefined;
-
-    if (digits) {
-        const normalized = digits.startsWith("55") ? digits : `55${digits}`;
-        const local = normalized.slice(2);
-        const client = await db.query.clientsTable.findFirst({
-            where: eq(clientsTable.phoneNumber, normalized),
-        }) || await db.query.clientsTable.findFirst({
-            where: eq(clientsTable.phoneNumber, local),
-        });
-
-        console.log("[ZAPI][Webhook] Matched client:", { clientId: client?.id, phone: normalized });
-
-        if (client) {
-            appt = await db.query.appointmentsTable.findFirst({
-                where: and(
-                    eq(appointmentsTable.clientId, client.id),
-                    eq(appointmentsTable.status, "not-confirmed"),
-                ),
-                orderBy: desc(appointmentsTable.date),
-            });
-        }
+    if (!code) {
+        return Response.json({ ok: true, ignored: true, reason: "no code found" });
     }
+
+    // Correlaciona pelo identificador de 4 dígitos
+    const appt = await db.query.appointmentsTable.findFirst({
+        where: and(
+            eq(appointmentsTable.identifier, code),
+            eq(appointmentsTable.status, "not-confirmed"),
+        ),
+        orderBy: desc(appointmentsTable.date),
+    });
 
     if (!appt) {
         return Response.json({ ok: false, error: "no pending appointment found" });
@@ -101,8 +90,8 @@ export async function POST(req: NextRequest) {
                     phone: payload.phone, // número que enviou a mensagem
                     message:
                         decision === "scheduled"
-                            ? "✅ Seu agendamento foi confirmado com sucesso!"
-                            : "❌ Seu agendamento foi cancelado conforme solicitado.",
+                            ? `✅ Seu agendamento #${appt.identifier} foi confirmado com sucesso!`
+                            : `❌ Seu agendamento #${appt.identifier} foi cancelado conforme solicitado.`,
                 }),
             }
         );

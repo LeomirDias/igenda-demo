@@ -332,6 +332,7 @@ export const appointmentsTable = pgTable("appointments", {
   date: timestamp("date").notNull(),
   time: time("time").notNull(),
   status: text("status").notNull().default("scheduled"),
+  identifier: text("identifier"),
   appointmentPriceInCents: integer("appointment_price_in_cents").notNull(),
   createdAT: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
