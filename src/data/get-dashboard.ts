@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { and, count, desc, eq, gte, lte, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, lte, sql, sum } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -46,7 +46,7 @@ const getDashboard = async ({ session, from, to }: Params) => {
       .where(
         and(
           eq(appointmentsTable.enterpriseId, session.user.enterprise.id),
-          eq(appointmentsTable.status, "scheduled"),
+          inArray(appointmentsTable.status, ["scheduled", "served"]),
           gte(appointmentsTable.date, fromDate),
           lte(appointmentsTable.date, toDate),
         ),
@@ -60,7 +60,7 @@ const getDashboard = async ({ session, from, to }: Params) => {
       .where(
         and(
           eq(appointmentsTable.enterpriseId, session.user.enterprise.id),
-          eq(appointmentsTable.status, "scheduled"),
+          inArray(appointmentsTable.status, ["scheduled", "served"]),
           gte(appointmentsTable.date, fromDate),
           lte(appointmentsTable.date, toDate),
         ),
@@ -109,7 +109,7 @@ const getDashboard = async ({ session, from, to }: Params) => {
         appointmentsTable,
         and(
           eq(appointmentsTable.professionalId, professionalsTable.id),
-          eq(appointmentsTable.status, "scheduled"),
+          inArray(appointmentsTable.status, ["scheduled", "served"]),
           gte(appointmentsTable.date, fromDate),
           lte(appointmentsTable.date, toDate),
         ),
@@ -130,7 +130,7 @@ const getDashboard = async ({ session, from, to }: Params) => {
         appointmentsTable,
         and(
           eq(appointmentsTable.serviceId, servicesTable.id),
-          eq(appointmentsTable.status, "scheduled"),
+          inArray(appointmentsTable.status, ["scheduled", "served"]),
           gte(appointmentsTable.date, fromDate),
           lte(appointmentsTable.date, toDate),
         ),
@@ -164,7 +164,7 @@ const getDashboard = async ({ session, from, to }: Params) => {
       .where(
         and(
           eq(appointmentsTable.enterpriseId, session.user.enterprise.id),
-          eq(appointmentsTable.status, "scheduled"),
+          inArray(appointmentsTable.status, ["scheduled", "served"]),
           gte(appointmentsTable.date, chartStartDate),
           lte(appointmentsTable.date, chartEndDate),
         ),
@@ -172,7 +172,7 @@ const getDashboard = async ({ session, from, to }: Params) => {
       .groupBy(sql`DATE(${appointmentsTable.date})`)
       .orderBy(sql`DATE(${appointmentsTable.date})`),
 
-    // Faturamento diário apenas de agendamentos com status 'scheduled'
+    // Faturamento diário apenas de agendamentos com status 'scheduled' ou 'served'
     db
       .select({
         date: sql<string>`DATE(${appointmentsTable.date})`.as("date"),
@@ -184,7 +184,7 @@ const getDashboard = async ({ session, from, to }: Params) => {
       .where(
         and(
           eq(appointmentsTable.enterpriseId, session.user.enterprise.id),
-          eq(appointmentsTable.status, "scheduled"),
+          inArray(appointmentsTable.status, ["scheduled", "served"]),
           gte(appointmentsTable.date, chartStartDate),
           lte(appointmentsTable.date, chartEndDate),
         ),
@@ -230,7 +230,7 @@ export async function getDailyBillingData(enterpriseId: string) {
     .where(
       and(
         eq(appointmentsTable.enterpriseId, enterpriseId),
-        eq(appointmentsTable.status, "scheduled"),
+        inArray(appointmentsTable.status, ["scheduled", "served"]),
         gte(appointmentsTable.date, chartStartDate),
         lte(appointmentsTable.date, chartEndDate),
       ),
