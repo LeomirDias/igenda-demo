@@ -1,7 +1,6 @@
 "use client";
 
 import { ptBR } from "date-fns/locale";
-import dayjs from "dayjs";
 import { CalendarIcon } from "lucide-react";
 import * as React from "react";
 
@@ -32,6 +31,28 @@ export function DatePicker({
 
     if (isMobile && isIOS) {
         // Solução alternativa para iOS - input nativo com fallback
+        // Corrigindo o problema de fuso horário do Safari iOS
+
+        const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            if (e.target.value) {
+                // PROBLEMA: O Safari iOS interpreta o input date como UTC
+                // SOLUÇÃO: Criamos a data no meio do dia (12:00) no fuso horário local
+                // para evitar que a conversão UTC->local resulte no dia anterior
+                const [year, month, day] = e.target.value.split('-').map(Number);
+                const localDate = new Date(year, month - 1, day, 12, 0, 0, 0);
+                onChange(localDate);
+            } else {
+                onChange(undefined);
+            }
+        };
+
+        // Para exibir a data corretamente no input, formatamos considerando
+        // apenas os componentes de data (ano, mês, dia) sem fuso horário
+        const displayValue = value ? (() => {
+            const localDate = new Date(value.getFullYear(), value.getMonth(), value.getDate());
+            return localDate.toISOString().split('T')[0];
+        })() : '';
+
         return (
             <input
                 type="date"
@@ -40,12 +61,12 @@ export function DatePicker({
                     !value && "text-muted-foreground",
                     className
                 )}
-                value={value ? dayjs(value).format('YYYY-MM-DD') : ''}
-                onChange={(e) => {
-                    const date = e.target.value ? new Date(e.target.value) : undefined;
-                    onChange(date);
-                }}
-                min={minDate ? dayjs(minDate).format('YYYY-MM-DD') : undefined}
+                value={displayValue}
+                onChange={handleDateChange}
+                min={minDate ? (() => {
+                    const localMinDate = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+                    return localMinDate.toISOString().split('T')[0];
+                })() : undefined}
             />
         );
     }
