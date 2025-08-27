@@ -1,5 +1,5 @@
-import dayjs from "dayjs";
 import {
+  Check,
   Clock,
   Edit2,
   Phone,
@@ -13,6 +13,7 @@ import React from "react";
 import { toast } from "sonner";
 
 import { cancelAppointment } from "@/actions/cancel-appointment";
+import { confirmAppointment } from "@/actions/confirm-appointment";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,7 @@ interface AppointmentCardProps {
   appointment: AppointmentWithRelations;
   onEdit: (id: string) => void;
   onDelete?: (id: string) => void;
+  onConfirm?: (id: string) => void;
   isMobile?: boolean;
 }
 
@@ -42,6 +44,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
   appointment,
   onEdit,
   onDelete,
+  onConfirm,
   isMobile,
 }) => {
   const price = (appointment.service.servicePriceInCents / 100).toLocaleString(
@@ -59,7 +62,6 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         className: "bg-red-100 border-red-500 text-red-700 border-2 rounded-xl",
       };
     }
-
     if (appointment.status === "not-confirmed") {
       return {
         label: "Não confirmado",
@@ -67,12 +69,11 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           "bg-orange-100 border-orange-500 text-orange-700 border-2 rounded-xl animate-bounce",
       };
     }
-    const isPast = dayjs(appointment.date).isBefore(dayjs(), "minute");
-    if (isPast) {
+    if (appointment.status === "served") {
       return {
         label: "Atendido",
         className:
-          "bg-green-100 border-green-500 text-green-700 border-1 rounded-xl",
+          "bg-green-100 border-green-500 text-green-700 border-2 rounded-xl",
       };
     }
     return {
@@ -95,6 +96,16 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
   });
 
   const [cancellationReason, setCancellationReason] = React.useState("");
+
+  const { execute: executeConfirm, status: confirmStatus } = useAction(confirmAppointment, {
+    onSuccess: () => {
+      toast.success("Agendamento confirmado com sucesso.");
+      onConfirm?.(appointment.id);
+    },
+    onError: () => {
+      toast.error("Erro ao confirmar agendamento.");
+    },
+  });
 
   if (isMobile) {
     return (
@@ -144,10 +155,19 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         </div>
         <div className="absolute right-2 bottom-2 flex flex-col">
           <Button
+            onClick={() => executeConfirm({ id: appointment.id })}
+            variant="link"
+            className="cursor-pointer"
+            disabled={confirmStatus === "executing" || appointment.status === "scheduled" || appointment.status === "canceled" || appointment.status === "served"}
+          >
+            <Check className="text-primary h-5 w-5" />
+          </Button>
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onEdit(appointment.id);
             }}
+            disabled={appointment.status === "canceled" || appointment.status === "served"}
             variant="link"
             className="cursor-pointer"
           >
@@ -155,7 +175,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="link" className="cursor-pointer">
+              <Button variant="link" className="cursor-pointer" disabled={appointment.status === "canceled" || appointment.status === "served"}>
                 <p className="text-red-500">
                   <X className="h-5 w-5" />
                 </p>
@@ -258,10 +278,19 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
       </CardContent>
       <div className="absolute right-2 bottom-2 flex flex-col">
         <Button
+          onClick={() => executeConfirm({ id: appointment.id })}
+          variant="link"
+          className="cursor-pointer"
+          disabled={confirmStatus === "executing" || appointment.status === "scheduled" || appointment.status === "canceled" || appointment.status === "served"}
+        >
+          <Check className="text-primary h-5 w-5" />
+        </Button>
+        <Button
           onClick={(e) => {
             e.stopPropagation();
             onEdit(appointment.id);
           }}
+          disabled={appointment.status === "canceled" || appointment.status === "served"}
           variant="link"
           className="cursor-pointer"
         >
@@ -269,7 +298,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="link" className="cursor-pointer">
+            <Button variant="link" className="cursor-pointer" disabled={appointment.status === "canceled" || appointment.status === "served"}>
               <p className="text-red-500">
                 <X className="h-5 w-5" />
               </p>

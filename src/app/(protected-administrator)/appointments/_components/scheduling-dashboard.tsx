@@ -18,7 +18,6 @@ import AddAppointmentButton from "./add-appointment-button";
 import { AppointmentList } from "./appointment-list";
 import { ConfirmationToggleButton } from "./confirmation-toggle-button";
 import { EditAppointmentDialog } from "./edit-appointment-dialog";
-import { NewAppointmentAlert } from "./new-appointment-alert";
 import { SidebarContent } from "./sidebar-content";
 
 // Definição do tipo AppointmentWithRelations
@@ -195,7 +194,6 @@ export function SchedulingDashboard({
               services={services}
               onSuccess={() => setEditingAppointmentId(null)}
             />
-            <NewAppointmentAlert />
           </div>
         </div>
       </div>

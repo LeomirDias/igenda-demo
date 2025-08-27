@@ -6,6 +6,7 @@ interface AppointmentListProps {
   appointments: AppointmentWithRelations[];
   onEdit: (id: string) => void;
   onDelete?: (id: string) => void;
+  onConfirm?: (id: string) => void;
   isMobile?: boolean;
 }
 
@@ -13,6 +14,7 @@ export const AppointmentList: React.FC<AppointmentListProps> = ({
   appointments,
   onEdit,
   onDelete,
+  onConfirm,
   isMobile,
 }) => (
   <>
@@ -24,6 +26,7 @@ export const AppointmentList: React.FC<AppointmentListProps> = ({
           appointment={appointment}
           onEdit={onEdit}
           onDelete={onDelete}
+          onConfirm={onConfirm}
           isMobile={isMobile}
         />
       ))}

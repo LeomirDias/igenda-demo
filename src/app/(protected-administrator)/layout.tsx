@@ -1,5 +1,3 @@
-
-import { NewAppointmentAlert } from "@/components/appointments/new-appointment-alert";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
 import { AppSidebar } from "./_components/app-sidebar"
@@ -11,7 +9,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <main className="w-full">
                 <SidebarTrigger />
                 {children}
-                <NewAppointmentAlert />
             </main>
         </SidebarProvider>
     )
