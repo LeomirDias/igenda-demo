@@ -6,7 +6,7 @@ function formatPhoneNumber(phone: string): string {
     return digits.startsWith("55") ? digits : `55${digits}`;
 }
 
-export async function sendWhatsappMessage(phone: string, message: string) {
+export async function sendWhatsappMessage(phone: string, message: string): Promise<{ messageId?: string; id?: string }> {
     try {
         const formattedPhone = formatPhoneNumber(phone);
 
@@ -15,7 +15,9 @@ export async function sendWhatsappMessage(phone: string, message: string) {
             message,
         });
 
-        return response.data;
+        // Algumas versões retornam { messageId } outras { id }
+        const data = response.data ?? {};
+        return { messageId: data.messageId ?? data.id, id: data.id };
     } catch (error) {
         console.error("Erro ao enviar mensagem pelo Z-API:", error);
         throw new Error("Falha ao enviar mensagem pelo WhatsApp.");

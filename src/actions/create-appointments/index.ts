@@ -51,18 +51,7 @@ export const createAppointment = actionClient
       .set("minute", parseInt(parsedInput.time.split(":")[1]))
       .toDate();
 
-    await db.insert(appointmentsTable).values({
-      clientId: parsedInput.clientId,
-      serviceId: parsedInput.serviceId,
-      professionalId: parsedInput.professionalId,
-      time: parsedInput.time,
-      date: appointmentDateTime,
-      enterpriseId: parsedInput.enterpriseId,
-      appointmentPriceInCents: service.servicePriceInCents,
-      status: "not-confirmed",
-    });
-
-    // Enviar mensagem para a empresa quando a confirmação for manual
+    // Obter empresa para saber o modo de confirmação ANTES de salvar
     const [enterprise] = await db
       .select()
       .from(enterprisesTable)
@@ -70,22 +59,54 @@ export const createAppointment = actionClient
 
     if (!enterprise) return;
 
-    if (enterprise.confirmation === "manual") {
-      const [[client], [professional]] = await Promise.all([
-        db.select().from(clientsTable).where(eq(clientsTable.id, parsedInput.clientId)),
-        db
-          .select()
-          .from(professionalsTable)
-          .where(eq(professionalsTable.id, parsedInput.professionalId)),
-      ]);
+    // Buscar cliente e profissional (para mensagens)
+    const [[client], [professional]] = await Promise.all([
+      db.select().from(clientsTable).where(eq(clientsTable.id, parsedInput.clientId)),
+      db
+        .select()
+        .from(professionalsTable)
+        .where(eq(professionalsTable.id, parsedInput.professionalId)),
+    ]);
 
-      if (!client || !professional) return;
+    if (!client || !professional) return;
 
-      const formattedDate = dayjs(appointmentDateTime).format("DD/MM/YYYY");
-      const formattedPrice = formatCurrencyInCents(service.servicePriceInCents);
+    const formattedDate = dayjs(appointmentDateTime).format("DD/MM/YYYY");
+    const formattedPrice = formatCurrencyInCents(service.servicePriceInCents);
 
-      const message = `Olá, ${enterprise.name}!👋\n\nHá um novo agendamento pendente de confirmação.📅\n\nDados do agendamento:\n• Cliente: ${client.name}\n• Telefone do cliente: ${client.phoneNumber}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${parsedInput.time}\n• Valor: ${formattedPrice}\n\nAcesse o painel da iGenda para confirmar ou recusar este agendamento.\n\nAtenciosamente, equipe iGenda💚`;
+    // Insere já com o status correto conforme a configuração da empresa
+    const initialStatus = enterprise.confirmation === "automatic" ? "scheduled" : "not-confirmed" as const;
+    const [inserted] = await db
+      .insert(appointmentsTable)
+      .values({
+        clientId: parsedInput.clientId,
+        serviceId: parsedInput.serviceId,
+        professionalId: parsedInput.professionalId,
+        time: parsedInput.time,
+        date: appointmentDateTime,
+        enterpriseId: parsedInput.enterpriseId,
+        appointmentPriceInCents: service.servicePriceInCents,
+        status: initialStatus,
+      })
+      .returning({ id: appointmentsTable.id });
 
-      await sendWhatsappMessage(enterprise.phoneNumber, message);
+    if (enterprise.confirmation === "automatic") {
+      // Mensagem para o cliente
+      const clientMsg = `Olá, ${client.name}! 👋\n\nSeu agendamento foi confirmado automaticamente. ✅\n\nDados do agendamento:\n• Empresa: ${enterprise.name}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${parsedInput.time}\n• Valor: ${formattedPrice}\n\nAté breve! 💚`;
+      await sendWhatsappMessage(client.phoneNumber, clientMsg);
+
+      // Mensagem para a empresa
+      const enterpriseMsg = `Olá, ${enterprise.name}! 👋\n\nUm novo agendamento foi confirmado automaticamente. ✅\n\nDados do agendamento:\n• Cliente: ${client.name}\n• Telefone do cliente: ${client.phoneNumber}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${parsedInput.time}\n• Valor: ${formattedPrice}`;
+      await sendWhatsappMessage(enterprise.phoneNumber, enterpriseMsg);
+    } else {
+      // Confirmação manual: envia mensagem de texto orientando resposta CONFIRMAR ou CANCELAR
+      const message = `Olá, ${enterprise.name}! 👋\n\nHá um novo agendamento aguardando confirmação. 📅\n\nDados do agendamento:\n• Cliente: ${client.name}\n• Telefone do cliente: ${client.phoneNumber}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${parsedInput.time}\n• Valor: ${formattedPrice}\n\nPara confirmar, responda com CONFIRMAR.\nPara cancelar, responda com CANCELAR.`;
+
+      const response = await sendWhatsappMessage(enterprise.phoneNumber, message);
+      if (response?.messageId || response?.id) {
+        await db
+          .update(appointmentsTable)
+          .set({ zapiOutgoingMessageId: response.messageId || response.id })
+          .where(eq(appointmentsTable.id, inserted.id));
+      }
     }
   });
