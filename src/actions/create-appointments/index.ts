@@ -51,6 +51,8 @@ export const createAppointment = actionClient
       .set("minute", parseInt(parsedInput.time.split(":")[1]))
       .toDate();
 
+
+
     // Obter empresa para saber o modo de confirmação ANTES de salvar
     const [enterprise] = await db
       .select()
@@ -93,8 +95,14 @@ export const createAppointment = actionClient
       });
 
     if (enterprise.confirmation === "automatic") {
+      // Monta endereço completo
+      const address = `${enterprise.address}, ${enterprise.number}`;
+      const fullAddress = enterprise.complement
+        ? `${address} - ${enterprise.complement}, ${enterprise.city}/${enterprise.state} - CEP: ${enterprise.cep}`
+        : `${address}, ${enterprise.city}/${enterprise.state} - CEP: ${enterprise.cep}`;
+
       // Mensagem para o cliente
-      const clientMsg = `Olá, ${client.name}! 👋\n\nSeu agendamento foi confirmado automaticamente. ✅\n\nDados do agendamento:\n• Código do agendamento: #${identifier}\n• Empresa: ${enterprise.name}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${parsedInput.time}\n• Valor: ${formattedPrice}\n\nAté breve! 💚`;
+      const clientMsg = `Olá, ${client.name}! 👋\n\nSeu agendamento em ${enterprise.name} foi confirmado!. ✅\n\nDados do agendamento:\n• Código do agendamento: #${identifier}\n• Empresa: ${enterprise.name}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${parsedInput.time}\n• Valor: ${formattedPrice}\n• Endereço: ${fullAddress}\n\nCaso precise remarcar ou cancelar entre em contato com ${enterprise.name} pelo número ${enterprise.phoneNumber} \n\nAgradecemos a preferência! 💚`;
       await sendWhatsappMessage(client.phoneNumber, clientMsg);
 
       // Mensagem para a empresa

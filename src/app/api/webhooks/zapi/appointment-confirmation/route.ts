@@ -2,12 +2,11 @@ import { and, desc, eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
 import { db } from "@/db";
-import { appointmentsTable } from "@/db/schema";
+import { appointmentsTable, clientsTable, enterprisesTable, professionalsTable, servicesTable } from "@/db/schema";
+import { sendWhatsappMessage } from "@/lib/zapi-service";
 
 
 const WEBHOOK_SECRET = (process.env.ZAPI_WEBHOOK_SECRET);
-const ZAPI_INSTANCE = process.env.ZAPI_INSTANCE!;
-const ZAPI_TOKEN = process.env.ZAPI_TOKEN!;
 
 export async function POST(req: NextRequest) {
     const url = new URL(req.url);
@@ -77,26 +76,53 @@ export async function POST(req: NextRequest) {
         .set({ status: decision })
         .where(eq(appointmentsTable.id, appt.id));
 
-    // envia mensagem de retorno para o cliente (opcional)
+    // Busca dados completos para as mensagens
+    const [enterprise, client, professional, service] = await Promise.all([
+        db.query.enterprisesTable.findFirst({
+            where: eq(enterprisesTable.id, appt.enterpriseId),
+        }),
+        db.query.clientsTable.findFirst({
+            where: eq(clientsTable.id, appt.clientId),
+        }),
+        db.query.professionalsTable.findFirst({
+            where: eq(professionalsTable.id, appt.professionalId),
+        }),
+        db.query.servicesTable.findFirst({
+            where: eq(servicesTable.id, appt.serviceId),
+        }),
+    ]);
+
+    if (!enterprise || !client || !professional || !service) {
+        console.error("[ZAPI][Webhook] Missing data for messages:", { enterprise: !!enterprise, client: !!client, professional: !!professional, service: !!service });
+        return Response.json({ ok: false, error: "missing data for messages" });
+    }
+
+    // Formata data e hora para as mensagens
+    const formattedDate = new Date(appt.date).toLocaleDateString("pt-BR");
+    const formattedTime = appt.time;
+
+    const address = `${enterprise.address}, ${enterprise.number}`;
+    const fullAddress = enterprise.complement
+        ? `${address} - ${enterprise.complement}, ${enterprise.city}/${enterprise.state} - CEP: ${enterprise.cep}`
+        : `${address}, ${enterprise.city}/${enterprise.state} - CEP: ${enterprise.cep}`;
+
+    // Envia mensagem de retorno para o cliente
     try {
-        await fetch(
-            `https://api.z-api.io/instances/${ZAPI_INSTANCE}/token/${ZAPI_TOKEN}/send-text`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    phone: payload.phone, // número que enviou a mensagem
-                    message:
-                        decision === "scheduled"
-                            ? `✅ Seu agendamento #${appt.identifier} foi confirmado com sucesso!`
-                            : `❌ Seu agendamento #${appt.identifier} foi cancelado conforme solicitado.`,
-                }),
-            }
-        );
+        const clientMessage = decision === "scheduled"
+            ? `✅ Olá, ${client.name}! Seu agendamento foi confirmado com sucesso!\n\nDados do agendamento:\n• Código: #${appt.identifier}\n• Empresa: ${enterprise.name}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${formattedTime}\n\n• Endereço: ${fullAddress}\n\nCaso precise remarcar ou cancelar entre em contato com ${enterprise.name} pelo número ${enterprise.phoneNumber} \n\nAgradecemos a preferência! 💚`
+            : `❌ Olá, ${client.name}! Seu agendamento foi cancelado por ${enterprise.name}.\n\nDados do agendamento cancelado:\n• Código: #${appt.identifier}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${formattedTime}\n\nPara reagendar, entre em contato com ${enterprise.name} pelo número ${enterprise.phoneNumber}.`;
+
+        await sendWhatsappMessage(client.phoneNumber, clientMessage);
+
+        // Envia mensagem de confirmação para a empresa
+        const enterpriseMessage = decision === "scheduled"
+            ? `✅ Agendamento #${appt.identifier} confirmado com sucesso!`
+            : `❌ Agendamento #${appt.identifier} cancelado com sucesso!`;
+
+        await sendWhatsappMessage(enterprise.phoneNumber, enterpriseMessage);
+
     } catch (err) {
-        console.error("Erro ao enviar mensagem de retorno:", err);
+        console.error("[ZAPI][Webhook] Erro ao enviar mensagens:", err);
     }
 
     return Response.json({ ok: true, appointmentId: appt.id, newStatus: decision });
