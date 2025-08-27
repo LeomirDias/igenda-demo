@@ -75,7 +75,7 @@ export const createAppointment = actionClient
 
     // Insere já com o status correto conforme a configuração da empresa
     const initialStatus = enterprise.confirmation === "automatic" ? "scheduled" : "not-confirmed" as const;
-    const [inserted] = await db
+    await db
       .insert(appointmentsTable)
       .values({
         clientId: parsedInput.clientId,
@@ -86,8 +86,7 @@ export const createAppointment = actionClient
         enterpriseId: parsedInput.enterpriseId,
         appointmentPriceInCents: service.servicePriceInCents,
         status: initialStatus,
-      })
-      .returning({ id: appointmentsTable.id });
+      });
 
     if (enterprise.confirmation === "automatic") {
       // Mensagem para o cliente
@@ -101,12 +100,6 @@ export const createAppointment = actionClient
       // Confirmação manual: envia mensagem de texto orientando resposta CONFIRMAR ou CANCELAR
       const message = `Olá, ${enterprise.name}! 👋\n\nHá um novo agendamento aguardando confirmação. 📅\n\nDados do agendamento:\n• Cliente: ${client.name}\n• Telefone do cliente: ${client.phoneNumber}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${parsedInput.time}\n• Valor: ${formattedPrice}\n\nPara confirmar, responda com CONFIRMAR.\nPara cancelar, responda com CANCELAR.`;
 
-      const response = await sendWhatsappMessage(enterprise.phoneNumber, message);
-      if (response?.messageId || response?.id) {
-        await db
-          .update(appointmentsTable)
-          .set({ zapiOutgoingMessageId: response.messageId || response.id })
-          .where(eq(appointmentsTable.id, inserted.id));
-      }
+      await sendWhatsappMessage(enterprise.phoneNumber, message);
     }
   });

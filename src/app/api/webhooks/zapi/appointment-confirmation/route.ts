@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { appointmentsTable, clientsTable } from "@/db/schema";
 
 
-const WEBHOOK_SECRET = process.env.ZAPI_WEBHOOK_SECRET!;
+const WEBHOOK_SECRET = (process.env.ZAPI_WEBHOOK_SECRET);
 const ZAPI_INSTANCE = process.env.ZAPI_INSTANCE!;
 const ZAPI_TOKEN = process.env.ZAPI_TOKEN!;
 
@@ -13,14 +13,15 @@ export async function POST(req: NextRequest) {
     const url = new URL(req.url);
     // Z-API normalmente não envia headers customizados.
     // Exigimos o segredo via query string: ?secret=...
-    const secret = url.searchParams.get("secret");
+    const rawSecret = url.searchParams.get("secret");
+    const secret = rawSecret ? decodeURIComponent(rawSecret).trim() : null;
 
     if (!secret) {
         console.warn("[ZAPI][Webhook] Missing secret query param");
         return Response.json({ ok: false, error: "missing_secret", hint: "append ?secret=YOUR_SECRET to the webhook URL" }, { status: 401 });
     }
     if (secret !== WEBHOOK_SECRET) {
-        console.warn("[ZAPI][Webhook] Invalid secret provided");
+        console.warn("[ZAPI][Webhook] Invalid secret provided", { providedLength: secret.length });
         return Response.json({ ok: false, error: "invalid_secret" }, { status: 401 });
     }
 
@@ -49,47 +50,31 @@ export async function POST(req: NextRequest) {
         return Response.json({ ok: true, ignored: true, reason: "no decision found" });
     }
 
-    // 1) Tenta correlacionar pela referência da mensagem enviada (id da mensagem enviada pela iGenda)
-    const referenceId: string | undefined =
-        payload?.referenceMessageId ||
-        payload?.quotedMessageId ||
-        payload?.context?.id ||
-        payload?.message?.contextInfo?.stanzaId ||
-        payload?.reaction?.referencedMessage?.messageId;
-
+    // Correlaciona apenas pelo CLIENTE via número do remetente
     let appt = null as Awaited<ReturnType<typeof db.query.appointmentsTable.findFirst>> | null;
 
-    if (referenceId) {
-        appt = await db.query.appointmentsTable.findFirst({
-            where: eq(appointmentsTable.zapiOutgoingMessageId, referenceId),
+    const rawPhone: string | undefined = payload?.phone ?? payload?.from ?? payload?.participantPhone ?? payload?.participant;
+    const digits = typeof rawPhone === "string" ? rawPhone.replace(/\D/g, "") : undefined;
+
+    if (digits) {
+        const normalized = digits.startsWith("55") ? digits : `55${digits}`;
+        const local = normalized.slice(2);
+        const client = await db.query.clientsTable.findFirst({
+            where: eq(clientsTable.phoneNumber, normalized),
+        }) || await db.query.clientsTable.findFirst({
+            where: eq(clientsTable.phoneNumber, local),
         });
-    }
 
-    // 2) Fallback: correlaciona pelo CLIENTE via número do remetente
-    if (!appt) {
-        const rawPhone: string | undefined = payload?.phone ?? payload?.from ?? payload?.participantPhone ?? payload?.participant;
-        const digits = typeof rawPhone === "string" ? rawPhone.replace(/\D/g, "") : undefined;
+        console.log("[ZAPI][Webhook] Matched client:", { clientId: client?.id, phone: normalized });
 
-        if (digits) {
-            const normalized = digits.startsWith("55") ? digits : `55${digits}`;
-            const local = normalized.slice(2);
-            const client = await db.query.clientsTable.findFirst({
-                where: eq(clientsTable.phoneNumber, normalized),
-            }) || await db.query.clientsTable.findFirst({
-                where: eq(clientsTable.phoneNumber, local),
+        if (client) {
+            appt = await db.query.appointmentsTable.findFirst({
+                where: and(
+                    eq(appointmentsTable.clientId, client.id),
+                    eq(appointmentsTable.status, "not-confirmed"),
+                ),
+                orderBy: desc(appointmentsTable.date),
             });
-
-            console.log("[ZAPI][Webhook] Matched client:", { clientId: client?.id });
-
-            if (client) {
-                appt = await db.query.appointmentsTable.findFirst({
-                    where: and(
-                        eq(appointmentsTable.clientId, client.id),
-                        eq(appointmentsTable.status, "not-confirmed"),
-                    ),
-                    orderBy: desc(appointmentsTable.date),
-                });
-            }
         }
     }
 
