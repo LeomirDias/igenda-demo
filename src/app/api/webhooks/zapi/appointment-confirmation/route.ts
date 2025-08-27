@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
     // Envia mensagem de retorno para o cliente
     try {
         const clientMessage = decision === "scheduled"
-            ? `✅ Olá, ${client.name}! Seu agendamento foi confirmado com sucesso!\n\nDados do agendamento:\n• Código: #${appt.identifier}\n• Empresa: ${enterprise.name}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${formattedTime}\n\n• Endereço: ${fullAddress}\n\nCaso precise remarcar ou cancelar entre em contato com ${enterprise.name} pelo número ${enterprise.phoneNumber} \n\nAgradecemos a preferência! 💚`
+            ? `✅ Olá, ${client.name}! Seu agendamento foi confirmado com sucesso!\n\nDados do agendamento:\n• Código: #${appt.identifier}\n• Empresa: ${enterprise.name}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${formattedTime}\n• Endereço: ${fullAddress}\n\nCaso precise remarcar ou cancelar entre em contato com ${enterprise.name} pelo número ${enterprise.phoneNumber} \n\nAgradecemos a preferência! 💚`
             : `❌ Olá, ${client.name}! Seu agendamento foi cancelado por ${enterprise.name}.\n\nDados do agendamento cancelado:\n• Código: #${appt.identifier}\n• Serviço: ${service.name}\n• Profissional: ${professional.name}\n• Data: ${formattedDate}\n• Horário: ${formattedTime}\n\nPara reagendar, entre em contato com ${enterprise.name} pelo número ${enterprise.phoneNumber}.`;
 
         await sendWhatsappMessage(client.phoneNumber, clientMessage);
