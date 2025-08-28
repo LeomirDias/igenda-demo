@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import {
   Check,
   Clock,
@@ -69,13 +70,26 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           "bg-orange-100 border-orange-500 text-orange-700 border-2 rounded-xl animate-bounce",
       };
     }
-    if (appointment.status === "served") {
+
+    // Verifica se o status é "served" OU se o horário do agendamento já passou
+    const isAppointmentTimePassed = () => {
+      const now = dayjs();
+      const appointmentDateTime = dayjs(appointment.date).hour(
+        parseInt(appointment.time.split(':')[0])
+      ).minute(
+        parseInt(appointment.time.split(':')[1])
+      );
+      return now.isAfter(appointmentDateTime);
+    };
+
+    if (appointment.status === "served" || isAppointmentTimePassed()) {
       return {
         label: "Atendido",
         className:
           "bg-green-100 border-green-500 text-green-700 border-2 rounded-xl",
       };
     }
+
     return {
       label: "Agendado",
       className:
