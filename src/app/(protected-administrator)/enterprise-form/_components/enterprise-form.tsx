@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Upload } from "lucide-react";
+import { HelpCircle, Loader2, Upload } from "lucide-react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatName } from "@/helpers/format-name";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -70,6 +71,7 @@ const enterpriseFormSchema = z.object({
   state: z.string().trim().min(2, {
     message: "Estado é obrigatório e deve ter no mínimo 2 caracteres.",
   }),
+  interval: z.string(),
 });
 
 const EnterpriseForm = () => {
@@ -94,6 +96,7 @@ const EnterpriseForm = () => {
       complement: "",
       city: "",
       state: "",
+      interval: "30"
     },
   });
 
@@ -177,6 +180,7 @@ const EnterpriseForm = () => {
         data.complement || "",
         data.city,
         data.state,
+        data.interval,
       );
 
       // Se houver um arquivo de avatar, faz o upload
@@ -494,6 +498,61 @@ const EnterpriseForm = () => {
                     {...field}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="interval"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <p>Intervalo de horário de atendimento</p>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="text-muted-foreground hover:text-foreground"
+                              aria-label="Ajuda sobre intervalo de horário"
+                            >
+                              <HelpCircle className="h-4 w-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" align="start" className="max-w-xs bg-background border-border shadow-lg text-white">
+                            <p>
+                              Define o tamanho dos slots de disponibilidade dos profissionais. Ex.: 30 min, 60 min. <br />
+                              <br />Um serviço ocupa múltiplos slots conforme sua duração (ex.: Serviço de 2h ocupa 4 slots de 30 min). <br />
+                              <br />Selecione esta opção de acordo com a sua estimativa de tempo de atendimento geral.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <span className="texto-xs font-extrabold text-red-500">Atenção: essa configuração não pode ser alterada mais tarde.</span>
+                  </div>
+                </FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione o tipo de confirmação..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="15">15 minutos</SelectItem>
+                    <SelectItem value="30">30 minutos</SelectItem>
+                    <SelectItem value="45">45 minutos</SelectItem>
+                    <SelectItem value="60">1 hora</SelectItem>
+                    <SelectItem value="90">1 hora e 30 minutos</SelectItem>
+                    <SelectItem value="120">2 horas</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

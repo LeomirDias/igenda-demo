@@ -115,13 +115,14 @@ const UpsertAppointmentForm = ({
   const selectedServiceId = form.watch("serviceId");
 
   const { data: availableTimes } = useQuery({
-    queryKey: ["available-times", selectedDate, selectedProfessionalId],
+    queryKey: ["available-times", selectedDate, selectedProfessionalId, selectedServiceId],
     queryFn: () =>
       getAvailableTimes({
         date: dayjs(selectedDate).format("YYYY-MM-DD"),
         professionalId: selectedProfessionalId,
+        serviceId: selectedServiceId,
       }),
-    enabled: !!selectedDate && !!selectedProfessionalId,
+    enabled: !!selectedDate && !!selectedProfessionalId && !!selectedServiceId,
   });
 
   const { data: serviceProfessionals } = useQuery({
@@ -179,7 +180,18 @@ const UpsertAppointmentForm = ({
       toast.success("Agendamento criado com sucesso.");
       onSuccess?.();
     },
-    onError: () => {
+    onError: (err) => {
+      const message = (err?.error && typeof err.error === "object" && "serverError" in err.error
+        ? (err.error as { serverError?: string }).serverError
+        : undefined) ?? "";
+      if (message?.includes("Time not available")) {
+        toast.error("Não foi possível agendar: a duração do serviço excede o tempo disponível para o horário escolhido.");
+        return;
+      }
+      if (message?.includes("Time conflicts")) {
+        toast.error("Horário indisponível: existe um agendamento conflitante neste período.");
+        return;
+      }
       toast.error("Erro ao criar agendamento.");
     },
   });
@@ -189,7 +201,18 @@ const UpsertAppointmentForm = ({
       toast.success("Agendamento atualizado com sucesso.");
       onSuccess?.();
     },
-    onError: () => {
+    onError: (err) => {
+      const message = (err?.error && typeof err.error === "object" && "serverError" in err.error
+        ? (err.error as { serverError?: string }).serverError
+        : undefined) ?? "";
+      if (message?.includes("Time not available")) {
+        toast.error("Não foi possível atualizar: a duração do serviço excede o tempo disponível para o horário escolhido.");
+        return;
+      }
+      if (message?.includes("Time conflicts")) {
+        toast.error("Horário indisponível: existe um agendamento conflitante neste período.");
+        return;
+      }
       toast.error("Erro ao atualizar agendamento.");
     },
   });
@@ -227,7 +250,7 @@ const UpsertAppointmentForm = ({
     return `R$ ${value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
   };
 
-  const isDateTimeEnabled = selectedClientId && selectedProfessionalId;
+  const isDateTimeEnabled = selectedClientId && selectedProfessionalId && selectedServiceId;
 
   return (
     <DialogContent className="w-[95vw] max-w-lg sm:max-w-[500px]">

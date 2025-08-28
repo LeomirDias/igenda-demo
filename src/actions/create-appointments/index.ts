@@ -24,6 +24,7 @@ export const createAppointment = actionClient
     const availableTimes = await getAvailableTimes({
       professionalId: parsedInput.professionalId,
       date: dayjs(parsedInput.date).format("YYYY-MM-DD"),
+      serviceId: parsedInput.serviceId,
     });
 
     if (!availableTimes?.data) {
@@ -46,10 +47,54 @@ export const createAppointment = actionClient
       throw new Error("Service not found");
     }
 
-    const appointmentDateTime = dayjs(parsedInput.date)
+    const appointmentStart = dayjs(parsedInput.date)
       .set("hour", parseInt(parsedInput.time.split(":")[0]))
       .set("minute", parseInt(parsedInput.time.split(":")[1]))
-      .toDate();
+      .set("second", 0)
+      .millisecond(0);
+
+    const appointmentEnd = appointmentStart.add(service.durationInMinutes, "minute");
+
+    // Verificar conflito localmente usando start/end ou, se preferir, faça via SQL
+    const existing = await db.query.appointmentsTable.findMany({
+      where: (appointment, { and, eq, ne }) =>
+        and(
+          eq(appointment.professionalId, parsedInput.professionalId),
+          ne(appointment.status, "canceled"),
+        ),
+      with: { service: true },
+    });
+    const sameDay = existing
+      .filter((a) => dayjs(a.date).isSame(appointmentStart, "day"))
+      .map((a) => {
+        const start = a.startTime
+          ? (() => {
+            const [h, m, s] = a.startTime.split(":").map(Number);
+            return dayjs(a.date)
+              .set("hour", h)
+              .set("minute", m)
+              .set("second", s || 0)
+              .millisecond(0);
+          })()
+          : dayjs(a.date);
+        const end = a.endTime
+          ? (() => {
+            const [h, m, s] = a.endTime.split(":").map(Number);
+            return dayjs(a.date)
+              .set("hour", h)
+              .set("minute", m)
+              .set("second", s || 0)
+              .millisecond(0);
+          })()
+          : start.add(a.service?.durationInMinutes ?? 0, "minute");
+        return { start, end };
+      });
+    const overlaps = sameDay.some(
+      (appt) => appt.start.isBefore(appointmentEnd) && appt.end.isAfter(appointmentStart),
+    );
+    if (overlaps) {
+      throw new Error("Time conflicts with another appointment");
+    }
 
 
 
@@ -72,7 +117,7 @@ export const createAppointment = actionClient
 
     if (!client || !professional) return;
 
-    const formattedDate = dayjs(appointmentDateTime).format("DD/MM/YYYY");
+    const formattedDate = dayjs(appointmentStart).format("DD/MM/YYYY");
     const formattedPrice = formatCurrencyInCents(service.servicePriceInCents);
 
     // Gerar identificador de 4 dígitos
@@ -87,7 +132,9 @@ export const createAppointment = actionClient
         serviceId: parsedInput.serviceId,
         professionalId: parsedInput.professionalId,
         time: parsedInput.time,
-        date: appointmentDateTime,
+        date: appointmentStart.toDate(),
+        startTime: appointmentStart.format("HH:mm:ss"),
+        endTime: appointmentEnd.format("HH:mm:ss"),
         enterpriseId: parsedInput.enterpriseId,
         appointmentPriceInCents: service.servicePriceInCents,
         status: initialStatus,

@@ -23,10 +23,6 @@ export const updateEnterpriseSchema = z.object({
     .string()
     .trim()
     .min(1, { message: "Tipo de confirmação é obrigatório." }),
-  interval: z
-    .string()
-    .trim()
-    .min(1, { message: "Intervalo de horários é obrigatório." }),
 });
 
 export type UpdateEnterpriseSchema = z.infer<typeof updateEnterpriseSchema>;

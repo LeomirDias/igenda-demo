@@ -330,9 +330,11 @@ export const clientSessionsTableRelations = relations(
 export const appointmentsTable = pgTable("appointments", {
   id: uuid("id").defaultRandom().primaryKey(),
   date: timestamp("date").notNull(),
-  time: time("time").notNull(),
+  time: time("time"),
   status: text("status").notNull().default("scheduled"),
   identifier: text("identifier"),
+  startTime: time("start_time"),
+  endTime: time("end_time"),
   appointmentPriceInCents: integer("appointment_price_in_cents").notNull(),
   createdAT: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")

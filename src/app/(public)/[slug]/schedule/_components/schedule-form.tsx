@@ -72,13 +72,14 @@ const ScheduleForm = ({ services, professionals, enterpriseId, clientId, enterpr
     const selectedServiceId = form.watch("serviceId");
 
     const { data: availableTimes } = useQuery({
-        queryKey: ["available-times", selectedDate, selectedProfessionalId],
+        queryKey: ["available-times", selectedDate, selectedProfessionalId, selectedServiceId],
         queryFn: () =>
             getAvailableTimes({
                 date: dayjs(selectedDate).format("YYYY-MM-DD"),
                 professionalId: selectedProfessionalId,
+                serviceId: selectedServiceId,
             }),
-        enabled: !!selectedDate && !!selectedProfessionalId,
+        enabled: !!selectedDate && !!selectedProfessionalId && !!selectedServiceId,
     });
 
     const { data: serviceProfessionals } = useQuery({
@@ -116,8 +117,17 @@ const ScheduleForm = ({ services, professionals, enterpriseId, clientId, enterpr
                 router.push(`/${enterpriseSlug}/successful-scheduling`);
             }, 1000);
         },
-        onError: () => {
-            toast.error("Erro ao realizar agendamento.");
+        onError: (err) => {
+            const message = err?.error?.serverError ?? "";
+            if (message?.includes("Time not available") || message?.includes("No available times")) {
+                toast.error("Não foi possível agendar: a duração do serviço excede o tempo disponível para o horário escolhido.");
+                return;
+            }
+            if (message?.includes("Time conflicts")) {
+                toast.error("Horário indisponível: existe um agendamento conflitante neste período.");
+                return;
+            }
+            toast.error("Não foi possível agendar: a duração do serviço excede o tempo disponível para o horário escolhido.");
         },
     });
 
