@@ -11,7 +11,7 @@ import {
   LogOutIcon,
   Moon,
   PlaySquareIcon,
-  SettingsIcon,
+  Settings,
   Tag,
   Users,
 } from "lucide-react";
@@ -21,12 +21,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -98,6 +93,14 @@ const othersItems = [
     title: "Suporte iGenda",
     url: "/support",
     icon: CircleHelp,
+  },
+];
+
+const settingsItems = [
+  {
+    title: "Configurações",
+    url: "/settings",
+    icon: Settings,
   },
 ];
 
@@ -183,62 +186,81 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Configurações</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {settingsItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Botões de logout e alternador de tema */}
+        <div className="mt-auto px-3 py-4">
+          <div className="flex items-center justify-between gap-2">
+            {/* Alternador de tema com animação */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className="flex-1 h-10 hover:text-primary hover:bg-none"
+              title="Alterar tema"
+            >
+              <div className="relative w-5 h-5">
+                <Sun className="absolute inset-0 h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute inset-0 h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </div>
+              <span className="ml-2 group-data-[state=collapsed]:hidden">
+                {resolvedTheme === "dark" ? "Tema claro" : "Tema escuro"}
+              </span>
+            </Button>
+
+            {/* Botão de logout apenas com ícone */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="h-10 w-1/3 hover:text-red-500 hover:bg-none"
+              title="Sair"
+            >
+              <LogOutIcon className="h-5 w-5" />
+              Sair
+            </Button>
+          </div>
+        </div>
       </SidebarContent>
 
       <SidebarFooter className="bg-background border-t py-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg">
-                  <Avatar className="h-12 w-12 rounded-full border-2 border-green-500 group-data-[state=collapsed]:h-8 group-data-[state=collapsed]:w-8">
-                    <AvatarImage
-                      src={session.data?.user?.enterprise?.avatarImageURL || ""}
-                    />
-                    {!session.data?.user?.enterprise?.avatarImageURL && (
-                      <AvatarFallback>{enterpriseInitials}</AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="group-data-[state=collapsed]:hidden">
-                    <p className="text-sm">
-                      {session.data?.user?.enterprise?.name}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {session.data?.user.email}
-                    </p>
-                  </div>
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() =>
-                    setTheme(resolvedTheme === "dark" ? "light" : "dark")
-                  }
-                  className="flex items-center gap-2"
-                >
-                  <span className="inline-block transition-transform duration-300 ease-in-out group-active:rotate-180">
-                    {resolvedTheme === "dark" ? (
-                      <Sun className="h-5 w-5" />
-                    ) : (
-                      <Moon className="h-5 w-5" />
-                    )}
-                  </span>
-                  <span>
-                    {resolvedTheme === "dark" ? "Tema claro" : "Tema escuro"}
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <SettingsIcon />
-                    Configurações
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOutIcon />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SidebarMenuButton size="lg">
+              <Avatar className="h-12 w-12 rounded-full border-2 border-green-500 group-data-[state=collapsed]:h-8 group-data-[state=collapsed]:w-8">
+                <AvatarImage
+                  src={session.data?.user?.enterprise?.avatarImageURL || ""}
+                />
+                {!session.data?.user?.enterprise?.avatarImageURL && (
+                  <AvatarFallback>{enterpriseInitials}</AvatarFallback>
+                )}
+              </Avatar>
+              <div className="group-data-[state=collapsed]:hidden">
+                <p className="text-sm">
+                  {session.data?.user?.enterprise?.name}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {session.data?.user.email}
+                </p>
+              </div>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
