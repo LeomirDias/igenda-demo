@@ -113,7 +113,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         <div className="flex w-full flex-row items-center justify-between gap-2 px-4">
           <div className="flex min-w-[70px] flex-row items-center gap-2">
             <span className="bg-primary border-primary text-md rounded-sm p-2 leading-none font-bold text-white">
-              {appointment.time.substring(0, 5)}
+              {appointment.time?.substring(0, 5)}
             </span>
             <Badge className={statusBadge.className}>{statusBadge.label}</Badge>
           </div>
@@ -227,7 +227,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-primary rounded-md px-3 py-1 font-semibold text-white">
-              {appointment.time.substring(0, 5)}
+              {appointment.time?.substring(0, 5)}
             </div>
             <Badge className={statusBadge.className}>{statusBadge.label}</Badge>
           </div>
