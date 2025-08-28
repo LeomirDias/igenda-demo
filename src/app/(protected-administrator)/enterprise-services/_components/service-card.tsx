@@ -28,6 +28,7 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { professionalsTable, servicesTable } from "@/db/schema";
 import { formatCurrencyInCents } from "@/helpers/currency";
+import { formatDuration } from "@/helpers/time";
 
 import ManageServiceProfessionals from "./manage-service-professionals";
 import UpsertServiceForm from "./upsert-service-form";
@@ -75,7 +76,7 @@ const ServiceCard = ({ service, professionals }: ServiceCardProps) => {
           className="justify-start text-xs sm:text-sm md:text-base"
         >
           <Clock className="mr-1 h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 lg:h-6 lg:w-6" />
-          <span className="truncate">{service.durationInMinutes} minutos</span>
+          <span className="truncate">{formatDuration(service.durationInMinutes)}</span>
         </Badge>
         <Badge
           variant="outline"

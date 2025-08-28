@@ -20,3 +20,17 @@ export const generateTimeSlots = (stepMinutes: number = 30) => {
 
     return slots;
 };
+
+export const formatDuration = (minutes: number): string => {
+    if (minutes >= 60) {
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+
+        if (remainingMinutes === 0) {
+            return `${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+        } else {
+            return `${hours}h ${remainingMinutes}min`;
+        }
+    }
+    return `${minutes} minutos`;
+};

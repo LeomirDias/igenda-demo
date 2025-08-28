@@ -4,20 +4,14 @@ import { Clock } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { servicesTable } from "@/db/schema";
+import { formatCurrencyInCents } from "@/helpers/currency";
+import { formatDuration } from "@/helpers/time";
 
 interface ServiceCardProps {
     services: typeof servicesTable.$inferSelect[]
 }
 
 const ServiceCard = ({ services }: ServiceCardProps) => {
-
-    const formatPrice = (price: number) => {
-        return new Intl.NumberFormat("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-        }).format(price)
-    }
-
     return (
         <div className="space-y-4 bg">
             <h2 className="text-xl font-bold text-foreground">Serviços ofertados</h2>
@@ -31,12 +25,12 @@ const ServiceCard = ({ services }: ServiceCardProps) => {
                                 </h3>
                                 <div className="flex items-center space-x-1 text-muted-foreground text-xs mb-3">
                                     <Clock className="w-4 h-4" />
-                                    <span>{service.durationInMinutes} minutos</span>
+                                    <span>{formatDuration(service.durationInMinutes)}</span>
                                 </div>
                             </div>
                             <div className="mt-auto">
                                 <p className="font-bold text-foreground text-sm">
-                                    {formatPrice(service.servicePriceInCents / 100)}
+                                    {formatCurrencyInCents(service.servicePriceInCents)}
                                 </p>
                             </div>
                         </div>

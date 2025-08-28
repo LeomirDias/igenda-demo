@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks"
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { NumericFormat } from 'react-number-format';
 import { toast } from "sonner";
@@ -8,6 +9,7 @@ import z from "zod";
 
 import { upsertService } from "@/actions/upsert-services";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -16,7 +18,7 @@ import { formatName } from "@/helpers/format-name";
 
 const formSchema = z.object({
     name: z.string().trim().min(1, { message: "Nome do serviço é obrigatório." }),
-    servicePrice: z.number().min(1, { message: "Preço do serviço é obrigatório" }),
+    servicePrice: z.number().min(0, { message: "Preço do serviço deve ser maior ou igual a 0" }),
     durationInMinutes: z.number().min(1, { message: "Duração do serviço é obrigatória" }),
 })
 
@@ -26,13 +28,15 @@ interface upsertServiceFormProps {
 }
 
 const UpsertServiceForm = ({ service, onSuccess }: upsertServiceFormProps) => {
+    const [requiresEvaluation, setRequiresEvaluation] = useState(service ? service.servicePriceInCents === 0 : false);
+    const [previousPrice, setPreviousPrice] = useState<number | null>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
         shouldUnregister: true,
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: service?.name || "",
-            servicePrice: service ? service.servicePriceInCents / 100 : 0, // Convert cents to float
+            servicePrice: service ? service.servicePriceInCents / 100 : 0,
             durationInMinutes: service ? service.durationInMinutes : 0,
         }
     })
@@ -42,6 +46,8 @@ const UpsertServiceForm = ({ service, onSuccess }: upsertServiceFormProps) => {
             toast.success(service ? "Serviço atualizado com sucesso!" : "Serviço adicionado com sucesso!");
             onSuccess?.();
             form.reset();
+            setRequiresEvaluation(false);
+            setPreviousPrice(null);
         },
         onError: () => {
             toast.error(`Erro ao adicionar serviço.`);
@@ -55,6 +61,21 @@ const UpsertServiceForm = ({ service, onSuccess }: upsertServiceFormProps) => {
             servicePriceInCents: Math.round(values.servicePrice * 100),
             durationInMinutes: values.durationInMinutes,
         });
+    };
+
+    const handleRequiresEvaluationChange = (checked: boolean) => {
+        setRequiresEvaluation(checked);
+        if (checked) {
+            // Salva o preço atual antes de definir como 0
+            setPreviousPrice(form.getValues("servicePrice"));
+            form.setValue("servicePrice", 0);
+        } else {
+            // Restaura o preço anterior ou mantém 0 se não havia preço anterior
+            if (previousPrice !== null && previousPrice > 0) {
+                form.setValue("servicePrice", previousPrice);
+            }
+            setPreviousPrice(null);
+        }
     };
 
     return (
@@ -108,32 +129,52 @@ const UpsertServiceForm = ({ service, onSuccess }: upsertServiceFormProps) => {
                         )}
                     />
 
-                    <FormField
-                        control={form.control}
-                        name="servicePrice"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>
-                                    Preço do serviço
-                                </FormLabel>
-                                <NumericFormat
-                                    value={field.value}
-                                    onValueChange={(value) => {
-                                        field.onChange(value.floatValue);
-                                    }}
-                                    decimalScale={2}
-                                    fixedDecimalScale
-                                    decimalSeparator=","
-                                    allowNegative={false}
-                                    allowLeadingZeros={false}
-                                    thousandSeparator="."
-                                    customInput={Input}
-                                    prefix="R$"
-                                />
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <div className="space-y-3">
+                        <FormField
+                            control={form.control}
+                            name="servicePrice"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>
+                                        Preço do serviço
+                                    </FormLabel>
+                                    <FormControl>
+                                        <NumericFormat
+                                            value={field.value}
+                                            onValueChange={(value) => {
+                                                field.onChange(value.floatValue);
+                                            }}
+                                            decimalScale={2}
+                                            fixedDecimalScale
+                                            decimalSeparator=","
+                                            allowNegative={false}
+                                            allowLeadingZeros={false}
+                                            thousandSeparator="."
+                                            customInput={Input}
+                                            prefix="R$"
+                                            disabled={requiresEvaluation}
+                                            className={requiresEvaluation ? "opacity-50 cursor-not-allowed" : ""}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="requiresEvaluation"
+                                checked={requiresEvaluation}
+                                onCheckedChange={handleRequiresEvaluationChange}
+                            />
+                            <label
+                                htmlFor="requiresEvaluation"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                Valor requer avaliação
+                            </label>
+                        </div>
+                    </div>
 
                     <DialogFooter>
                         <Button type="submit" disabled={form.formState.isSubmitting || upsertServiceAction.isPending}>
