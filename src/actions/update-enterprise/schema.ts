@@ -11,8 +11,7 @@ export const updateEnterpriseSchema = z.object({
   register: z.string().trim().min(1, { message: "Registro é obrigatório." }),
   instagramURL: z
     .string()
-    .trim()
-    .min(1, { message: "URL do Instagram é obrigatória." }),
+    .optional(),
   cep: z.string().trim().min(8, { message: "CEP é obrigatório." }),
   address: z.string().trim().min(1, { message: "Endereço é obrigatório." }),
   number: z.string().trim().min(1, { message: "Número é obrigatório." }),
