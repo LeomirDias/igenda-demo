@@ -27,6 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -412,25 +413,44 @@ const EnterpriseCard = ({ enterprise }: EnterpriseCardProps) => {
                   <FormItem>
                     <FormLabel>
                       Tipo de Confirmação{" "}
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
+                      <span className="inline-flex items-center gap-1">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="hidden text-muted-foreground hover:text-foreground md:inline-flex"
+                                aria-label="Ajuda sobre confirmação"
+                              >
+                                <HelpCircle className="h-4 w-4" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" align="start" className="max-w-xs bg-background border-border shadow-lg text-white">
+                              <p>
+                                Esta configuração define como será feita a confirmação de agendamentos. <br /> <br /> O agendamento automático é feito 100%
+                                pelo sistema. <br /> <br /> O agendamento automático depende da sua confirmação para de fato confirmar o horário do cliente.
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <Popover>
+                          <PopoverTrigger asChild>
                             <button
                               type="button"
-                              className="text-muted-foreground hover:text-foreground"
-                              aria-label="Ajuda sobre intervalo de horário"
+                              className="text-muted-foreground hover:text-foreground md:hidden"
+                              aria-label="Ajuda sobre confirmação (mobile)"
                             >
                               <HelpCircle className="h-4 w-4" />
                             </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" align="start" className="max-w-xs bg-background border-border shadow-lg text-white">
-                            <p>
+                          </PopoverTrigger>
+                          <PopoverContent align="start" className="max-w-xs">
+                            <p className="text-sm">
                               Esta configuração define como será feita a confirmação de agendamentos. <br /> <br /> O agendamento automático é feito 100%
                               pelo sistema. <br /> <br /> O agendamento automático depende da sua confirmação para de fato confirmar o horário do cliente.
                             </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                          </PopoverContent>
+                        </Popover>
+                      </span>
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
