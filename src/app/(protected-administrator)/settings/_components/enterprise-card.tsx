@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Store, Upload } from "lucide-react";
+import { HelpCircle, Loader2, Store, Upload } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAction } from "next-safe-action/hooks";
@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { enterprisesTable } from "@/db/schema";
 
 interface EnterpriseCardProps {
@@ -203,8 +204,8 @@ const EnterpriseCard = ({ enterprise }: EnterpriseCardProps) => {
       <CardContent className="space-y-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-muted relative h-24 w-24 overflow-hidden rounded-full border-1 border-gray-200">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="bg-muted relative h-24 w-24 overflow-hidden rounded-full border-1 border-gray-200 mx-auto sm:mx-0">
                 {avatarPreview ? (
                   <Image
                     src={avatarPreview}
@@ -236,7 +237,7 @@ const EnterpriseCard = ({ enterprise }: EnterpriseCardProps) => {
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"
@@ -411,9 +412,25 @@ const EnterpriseCard = ({ enterprise }: EnterpriseCardProps) => {
                   <FormItem>
                     <FormLabel>
                       Tipo de Confirmação{" "}
-                      <span className="text-muted-foreground text-xs">
-                        (Pode ser alterado na tela de agendamentos)
-                      </span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="text-muted-foreground hover:text-foreground"
+                              aria-label="Ajuda sobre intervalo de horário"
+                            >
+                              <HelpCircle className="h-4 w-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" align="start" className="max-w-xs bg-background border-border shadow-lg text-white">
+                            <p>
+                              Esta configuração define como será feita a confirmação de agendamentos. <br /> <br /> O agendamento automático é feito 100%
+                              pelo sistema. <br /> <br /> O agendamento automático depende da sua confirmação para de fato confirmar o horário do cliente.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
@@ -435,7 +452,7 @@ const EnterpriseCard = ({ enterprise }: EnterpriseCardProps) => {
               />
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={upsertEnterpriseAction.isPending || isUploadingAvatar}>
+              <Button type="submit" className="w-full sm:w-auto" disabled={upsertEnterpriseAction.isPending || isUploadingAvatar}>
                 {upsertEnterpriseAction.isPending || isUploadingAvatar ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}

@@ -55,7 +55,7 @@ const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
 
     if (!subscription) {
         return (
-            <Card className="relative">
+            <Card className="relative w-full">
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <CreditCard className="text-primary h-5 w-5" />
@@ -131,8 +131,9 @@ const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button
-                            variant="destructive"
-                            className="w-full"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute bottom-4 right-4 text-red-500 hover:text-white"
                             disabled={subscription.subscriptionStatus !== "active"}
                         >
                             Cancelar Assinatura

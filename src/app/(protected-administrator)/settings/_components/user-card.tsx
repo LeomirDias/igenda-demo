@@ -82,7 +82,7 @@ const UserCard = ({ user }: UserCardProps) => {
       <div className="flex flex-col gap-2 p-4 pt-0">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant="destructive" className="w-full">
+            <Button variant="ghost" size="sm" className="absolute bottom-4 right-4 text-red-500 hover:text-white">
               Excluir conta
             </Button>
           </DialogTrigger>

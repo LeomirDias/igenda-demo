@@ -64,7 +64,7 @@ const UpdateUserForm = ({ user, onSuccess }: upsertUserFormProps) => {
       <DialogTitle>{user ? user.name : "Adicionar usuário"}</DialogTitle>
       <DialogDescription>
         {user
-          ? "Edite as informações desse usuário."
+          ? "Edite as informações de usuário."
           : "Adicione um novo usuário à sua empresa!"}
       </DialogDescription>
       <Form {...form}>

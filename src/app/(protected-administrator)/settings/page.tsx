@@ -11,6 +11,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db } from "@/db";
 import { enterprisesTable, usersSubscriptionTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -62,13 +63,37 @@ const SettingsPage = async () => {
         </PageHeaderContent>
       </PageHeader>
       <PageContent>
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UserCard user={session.user} />
-            <SubscriptionCard subscription={normalizedSubscription} />
-          </div>
-          <EnterpriseCard enterprise={enterprise} />
-        </div>
+        <Tabs defaultValue="account" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-background p-1 rounded-full gap-2">
+            <TabsTrigger
+              value="account"
+              className="flex items-center justify-center px-3 py-2 rounded-full data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+            >
+              Conta e Assinatura
+            </TabsTrigger>
+            <TabsTrigger
+              value="enterprise"
+              className="flex items-center justify-center px-3 py-2 rounded-full data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+            >
+              Minha empresa
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="account" className="mt-4">
+            <div className="flex flex-col md:flex-col gap-4">
+              <div className="w-full">
+                <UserCard user={session.user} />
+              </div>
+              <div className="w-full">
+                <SubscriptionCard subscription={normalizedSubscription} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="enterprise" className="mt-4">
+            <EnterpriseCard enterprise={enterprise} />
+          </TabsContent>
+        </Tabs>
       </PageContent>
     </PageContainer>
   );
