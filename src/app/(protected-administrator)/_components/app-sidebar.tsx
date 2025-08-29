@@ -30,7 +30,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 
@@ -109,7 +108,6 @@ const othersItems = [
 
 export function AppSidebar() {
   const session = authClient.useSession();
-  const { setOpen } = useSidebar();
 
   const pathname = usePathname();
 
@@ -132,18 +130,21 @@ export function AppSidebar() {
     };
   }, [pathname]);
 
-
-
   const enterpriseInitials = session.data?.user?.enterprise?.name
     .split(" ")
     .map((name) => name[0])
     .join("");
 
   return (
-    <Sidebar collapsible="icon" className="md:left-0 md:right-auto right-0 left-auto">
-      <SidebarHeader className="bg-background flex items-center justify-center border-b p-4" />
+    <Sidebar
+      variant="floating"
+    >
+      <div>
 
-      <SidebarContent className="bg-background">
+      </div>
+      <SidebarHeader className="bg-background flex items-center justify-center p-4 rounded-t-lg shadow-lg border border-border border-b-0" />
+
+      <SidebarContent className="bg-background shadow-lg border border-border">
         <SidebarGroup>
           <SidebarGroupLabel>Minha agenda</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -151,7 +152,7 @@ export function AppSidebar() {
               {itemsAgenda.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url} onClick={() => setOpen(false)}>
+                    <Link href={item.url}>
                       <div className="relative">
                         <item.icon className="h-5 w-5" />
                         {item.url === "/appointments/pending" && hasUnreadPending && (
@@ -175,7 +176,7 @@ export function AppSidebar() {
               {itemsEnterprise.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url} onClick={() => setOpen(false)}>
+                    <Link href={item.url}>
                       <item.icon className="h-5 w-5" />
                       <span className="text-sm">{item.title}</span>
                     </Link>
@@ -193,7 +194,7 @@ export function AppSidebar() {
               {itemsClients.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url} onClick={() => setOpen(false)}>
+                    <Link href={item.url}>
                       <item.icon className="h-5 w-5" />
                       <span className="text-sm">{item.title}</span>
                     </Link>
@@ -211,7 +212,7 @@ export function AppSidebar() {
               {othersItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url} onClick={() => setOpen(false)}>
+                    <Link href={item.url}>
                       <item.icon className="h-5 w-5" />
                       <span className="text-sm">{item.title}</span>
                     </Link>
@@ -225,7 +226,7 @@ export function AppSidebar() {
 
       </SidebarContent>
 
-      <SidebarFooter className="bg-background border-t py-4">
+      <SidebarFooter className="bg-background rounded-b-lg shadow-lg border border-border border-t-0">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg">
