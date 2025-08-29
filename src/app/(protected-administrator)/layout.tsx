@@ -1,3 +1,4 @@
+import AlertsButton from "@/components/ui/alerts-button"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
 import { AppSidebar } from "./_components/app-sidebar"
@@ -7,7 +8,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <SidebarProvider>
             <AppSidebar />
             <main className="w-full">
-                <SidebarTrigger />
+                <div className="flex items-center justify-between px-4 py-2">
+                    <SidebarTrigger />
+                    <AlertsButton />
+                </div>
                 {children}
             </main>
         </SidebarProvider>
