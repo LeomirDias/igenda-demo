@@ -9,21 +9,16 @@ import {
   CircleHelp,
   LayoutDashboard,
   LinkIcon,
-  LogOutIcon,
-  Moon,
   PlaySquareIcon,
   Settings,
   Tag,
   Users,
 } from "lucide-react";
-import { Sun } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -35,6 +30,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 
@@ -112,11 +108,8 @@ const othersItems = [
 ];
 
 export function AppSidebar() {
-  const { setTheme, resolvedTheme } = useTheme();
-
-  const router = useRouter();
-
   const session = authClient.useSession();
+  const { setOpen } = useSidebar();
 
   const pathname = usePathname();
 
@@ -139,15 +132,7 @@ export function AppSidebar() {
     };
   }, [pathname]);
 
-  const handleSignOut = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/authentication");
-        },
-      },
-    });
-  };
+
 
   const enterpriseInitials = session.data?.user?.enterprise?.name
     .split(" ")
@@ -155,7 +140,7 @@ export function AppSidebar() {
     .join("");
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="md:left-0 md:right-auto right-0 left-auto">
       <SidebarHeader className="bg-background flex items-center justify-center border-b p-4" />
 
       <SidebarContent className="bg-background">
@@ -166,14 +151,14 @@ export function AppSidebar() {
               {itemsAgenda.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
+                    <Link href={item.url} onClick={() => setOpen(false)}>
                       <div className="relative">
-                        <item.icon />
+                        <item.icon className="h-5 w-5" />
                         {item.url === "/appointments/pending" && hasUnreadPending && (
                           <span className="absolute -right-0.5 -top-0.5 inline-flex h-2.5 w-2.5 items-center justify-center rounded-full bg-emerald-500" aria-hidden />
                         )}
                       </div>
-                      <span>{item.title}</span>
+                      <span className="text-sm">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -190,9 +175,9 @@ export function AppSidebar() {
               {itemsEnterprise.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                    <Link href={item.url} onClick={() => setOpen(false)}>
+                      <item.icon className="h-5 w-5" />
+                      <span className="text-sm">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -208,9 +193,9 @@ export function AppSidebar() {
               {itemsClients.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                    <Link href={item.url} onClick={() => setOpen(false)}>
+                      <item.icon className="h-5 w-5" />
+                      <span className="text-sm">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -226,9 +211,9 @@ export function AppSidebar() {
               {othersItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                    <Link href={item.url} onClick={() => setOpen(false)}>
+                      <item.icon className="h-5 w-5" />
+                      <span className="text-sm">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -237,39 +222,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Botões de logout e alternador de tema */}
-        <div className="mt-auto px-3 py-4">
-          <div className="flex items-center justify-between gap-2">
-            {/* Alternador de tema com animação */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-              className="flex-1 h-10 hover:text-primary hover:bg-none"
-              title="Alterar tema"
-            >
-              <div className="relative w-5 h-5">
-                <Sun className="absolute inset-0 h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute inset-0 h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              </div>
-              <span className="ml-2 group-data-[state=collapsed]:hidden">
-                {resolvedTheme === "dark" ? "Tema claro" : "Tema escuro"}
-              </span>
-            </Button>
 
-            {/* Botão de logout apenas com ícone */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="h-10 w-1/3 hover:text-red-500 hover:bg-none"
-              title="Sair"
-            >
-              <LogOutIcon className="h-5 w-5" />
-              Sair
-            </Button>
-          </div>
-        </div>
       </SidebarContent>
 
       <SidebarFooter className="bg-background border-t py-4">
