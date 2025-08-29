@@ -28,6 +28,7 @@ const getDashboard = async ({ session, from, to }: Params) => {
 
   const [
     [totalRevenue],
+    [forecastedRevenue],
     [totalAppointments],
     [totalClients],
     [totalProfessionals],
@@ -46,7 +47,21 @@ const getDashboard = async ({ session, from, to }: Params) => {
       .where(
         and(
           eq(appointmentsTable.enterpriseId, session.user.enterprise.id),
-          inArray(appointmentsTable.status, ["scheduled", "served"]),
+          eq(appointmentsTable.status, "served"),
+          gte(appointmentsTable.date, fromDate),
+          lte(appointmentsTable.date, toDate),
+        ),
+      ),
+
+    db
+      .select({
+        total: sum(appointmentsTable.appointmentPriceInCents),
+      })
+      .from(appointmentsTable)
+      .where(
+        and(
+          eq(appointmentsTable.enterpriseId, session.user.enterprise.id),
+          eq(appointmentsTable.status, "scheduled"),
           gte(appointmentsTable.date, fromDate),
           lte(appointmentsTable.date, toDate),
         ),
@@ -201,6 +216,7 @@ const getDashboard = async ({ session, from, to }: Params) => {
 
   return {
     totalRevenue,
+    forecastedRevenue,
     totalAppointments,
     totalClients,
     totalProfessionals,

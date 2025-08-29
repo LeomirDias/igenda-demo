@@ -59,9 +59,9 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
 
   const {
     totalRevenue,
+    forecastedRevenue,
     totalAppointments,
     totalClients,
-    totalProfessionals,
     totalCanceledAppointments,
     topProfessionals,
     topServices,
@@ -91,10 +91,10 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
       </PageHeader>
       <StatsCards
         totalRevenue={totalRevenue.total ? Number(totalRevenue.total) : null}
+        forecastedRevenue={forecastedRevenue.total ? Number(forecastedRevenue.total) : 0}
         totalAppointments={totalAppointments.total}
         totalCanceledAppointments={totalCanceledAppointments.total}
         totalClients={totalClients.total}
-        totalProfessionals={totalProfessionals.total}
       />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <TopProfessionals professionals={topProfessionals} />
